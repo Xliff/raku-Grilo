@@ -230,7 +230,21 @@ class Grilo::Source {
     self.connect-content-changed($!gs, :$raw);
   }
 
-  method browse (
+  multi method browse (
+                          @keys,
+    GrlOperationOptions() $options,
+                          &callback,
+    gpointer              $user_data   = gpointer
+  ) {
+    samewith(
+      GrlMedia,
+      GLib::GList.new(@keys),
+      $options,
+      $callback,
+      $user_data
+    );
+  }
+  multi method browse (
     GrlMedia()            $container,
                           @keys,
     GrlOperationOptions() $options,
@@ -245,7 +259,7 @@ class Grilo::Source {
       $user_data
     );
   }
-  method browse (
+  multi method browse (
     GrlMedia()            $container,
     GList()               $keys,
     GrlOperationOptions() $options,
@@ -262,7 +276,43 @@ class Grilo::Source {
     );
   }
 
-  method browse_sync (
+  proto method browse_sync (|)
+  { * }
+
+  multi method browse_sync (
+                             @keys,
+    GrlOperationOptions()    $options,
+    CArray[Pointer[GError]]  $error          = gerror,
+                            :$raw            = False,
+                            :gslist(:$glist) = False
+  ) {
+    samewith(
+       GrlMedia,
+       GLib::GList.new(@keys, typed => Int),
+       $options,
+       $error,
+      :$raw,
+      :$glist
+    );
+  }
+  multi method browse_sync (
+    GrlMedia()               $container,
+                             @keys,
+    GrlOperationOptions()    $options,
+    CArray[Pointer[GError]]  $error          = gerror,
+                            :$raw            = False,
+                            :gslist(:$glist) = False
+  ) {
+    samewith(
+       $container,
+       GLib::GList.new(@keys, typed => Int),
+       $options,
+       $error,
+      :$raw,
+      :$glist
+    );
+  }
+  multi method browse_sync (
     GrlMedia()               $container,
     GList()                  $keys,
     GrlOperationOptions()    $options,
@@ -427,13 +477,22 @@ class Grilo::Source {
     so grl_source_may_resolve($!gs, $media, $k, $missing_keys);
   }
 
-  method notify_change (
+  proto method notify_change (|)
+    is also<notify-change>
+  { * }
+
+  multi method notify_change ($change_type, $location_unknown) {
+    samewith(
+      GrlMedia,
+      $change_type,
+      $location_type
+    );
+  }
+  multi method notify_change (
     GrlMedia() $media,
     Int()      $change_type,
     Int()      $location_unknown
-  )
-    is also<notify-change>
-  {
+  ) {
     my GrlSourceChangeType $c = $change_type;
     my gboolean            $l = $location_unknown.so.Int;
 
@@ -567,6 +626,20 @@ class Grilo::Source {
     set_error($error);
   }
 
+  method resolve
+                          @keys,
+    GrlOperationOptions() $options,
+                          &callback,
+    gpointer              $user_data = gpointer
+  ) {
+    samewith(
+      GrlMedia,
+      GLib::GList.new(@keys, typed => Int),
+      $options,
+      &callback,
+      $user_data
+    );
+  }
   method resolve (
     GrlMedia()            $media,
                           @keys,
@@ -596,6 +669,20 @@ class Grilo::Source {
     is also<resolve-sync>
   { * }
 
+  multi method resolve_sync (
+                             @keys,
+    GrlOperationOptions()    $options,
+    CArray[Pointer[GError]]  $error    = gerror,
+                            :$raw      = False
+  ) {
+    samewith(
+       GrlMedia,
+       GLib::GList.new(@keys, typed => Int),
+       $options,
+       $error,
+      :$raw
+    );
+  }
   multi method resolve_sync (
     GrlMedia()               $media,
                              @keys,
@@ -697,6 +784,20 @@ class Grilo::Source {
     grl_source_slow_keys($!gs);
   }
 
+  multi method store (
+    GrlMedia() $media,
+               $flags,
+               &callback,
+               $user_data = gpointer
+  ) {
+    samewith(
+      GrlMedia,
+      $media,
+      $flags,
+      &callback,
+      $user_data
+    );
+  }
   method store (
     GrlMedia() $parent,
     GrlMedia() $media,
@@ -709,7 +810,13 @@ class Grilo::Source {
     grl_source_store($!gs, $parent, $media, $f, &callback, $user_data);
   }
 
-  method store_sync (
+  proto method store_sync (|)
+  { * }
+
+  multi method store_sync ($media, $flags, $error = gerror) {
+    samewith(GrlMedia, $media, $flags, $error);
+  }
+  multi method store_sync (
     GrlMedia()              $parent,
     GrlMedia()              $media,
     Int()                   $flags,
@@ -725,7 +832,25 @@ class Grilo::Source {
   }
 
   multi method store_metadata (
-    GrlMedia  $media,
+     $media,
+     $flags,
+     &callback,
+     $user_data       = gpointer,
+    :$raw            = False,
+    :gslist(:$glist) = False
+  ) {
+    samewith(
+       $media,
+       GList,
+       $flags,
+       &callback,
+       $user_data
+      :$raw,
+      :$glist
+    );
+  }
+  multi method store_metadata (
+              $media,
               @keys,
               $flags,
               &callback,
