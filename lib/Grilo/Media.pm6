@@ -650,8 +650,12 @@ class Grilo::Media {
     self!array-ize( 'composers', sub (\k) { $s.get_composer_nth(k) } )
   }
 
-  method get_creation_date {
-    grl_media_get_creation_date($!grm);
+  method get_creation_date ( :$raw = False, :$raku = True ) {
+    my $d = grl_media_get_creation_date($!grm);
+    return $d if $raw;
+    $d = GLib::DateTime.new($d);
+    return $d unless $raku;
+    $d.DateTime;
   }
 
   method get_description {
@@ -756,7 +760,10 @@ class Grilo::Media {
 
   method get_last_played ( :$raw = False, :$raku = True ) {
     my $d = grl_media_get_last_played($!grm);
-    return $d if $raw;
+    return $d if $raw;return $d if $raw;
+    $d = GLib::DateTime.new($d);
+    return $d unless $raku;
+    $d.DateTime;
     $d = GLib::DateTime.new($d);
     return $d unless $raku;
     $d.DateTime;
@@ -907,23 +914,39 @@ class Grilo::Media {
     grl_media_get_region($!grm);
   }
 
-  method get_region_data (
-    CArray[GDateTime] $publication_date,
-    CArray[Str]       $certificate
+  proto method get_region_data (|)
+  { * }
+
+  multi method get_region_data ( :$raw = False, :$raku = True) {
+    my ($p, $d) = ( newCArray(GDateTime), newCArray(Str) );
+
+    samewith($p, $d);
+  }
+  multi method get_region_data (
+    CArray[GDateTime]  $publication_date,
+    CArray[Str]        $certificate
+                      :$raw               = False,
+                      :$raku              = True
   ) {
     grl_media_get_region_data($!grm, $publication_date, $certificate);
+    my ($p, $c) = ppr($publication_date, $certificate);
+    return ($p, $c) if $raw;
+    $p = GLib::DateTime.new($p);
+    return ($p, $c) unless $raku;
+    ($p.DateTime, $c);
   }
 
   proto method get_region_data_nth (|)
   { * }
 
-  multi method get_region_data_nth ($index, :$raku = True) {
+  multi method get_region_data_nth ($index, :$raw = False, :$raku = True) {
     my $p = newCArray(GDateTime);
     my $c = newCArray(Str);
 
     samewith($index, $p, $c);
 
     ($p, $c) = ppr($p, $c);
+    return ($p, $c) if $raw;
     $p = GLib::DateTime.new($p).DateTime if $raku;
     ($p, $c);
   }
@@ -973,6 +996,16 @@ class Grilo::Media {
     grl_media_get_thumbnail($!grm);
   }
 
+  method get_thumbnail_nth (Int() $index) {
+    my guint $i = $index;
+
+    grl_media_get_thumbnail_nth($!grm, $i);
+  }
+
+  method thumbnails {
+    self!array-ize( 'thumbnails', sub (\k) { self.get_thumbnail_nth(k) } )
+  }
+
   method get_thumbnail_binary ($size is rw) {
     my gsize $s = 0;
 
@@ -980,17 +1013,33 @@ class Grilo::Media {
     $size = $s;
   }
 
-  method get_thumbnail_binary_nth (
-    gsize    $size,
-    guint    $index
+  proto method get_thumbnail_binary_nth (|)
+  { * }
+
+  multi method get_thumbnail_binary_nth ($index, :$raw = False, :$buf = True) {
+    samewith($, $index, :$raw, :$buf);
+  }
+  multi method get_thumbnail_binary_nth (
+           $size is rw,
+    Int()  $index,
+          :$raw = False,
+          :$buf = True
   ) {
-    grl_media_get_thumbnail_binary_nth($!grm, $size, $index);
+    my guint $i = $index;
+    my gsize $s = 0;
+
+    my $tb = grl_media_get_thumbnail_binary_nth($!grm, $s, $i);
+    $size = $s;
+    return ($tb, $size) if $raw;
+    return CArrayToArray($tb, $size) unless $buf;
+    Buf.new( $tb[^$size] );
   }
 
-  method get_thumbnail_nth (
-    guint    $index
-  ) {
-    grl_media_get_thumbnail_nth($!grm, $index);
+  method thumbnail_binaries {
+    self!array-ize(
+      'thumbnail-binaries',
+      sub (\k) { self.get_thumbnail_binary(k) } )
+    );
   }
 
   method get_title {
@@ -1011,25 +1060,53 @@ class Grilo::Media {
     grl_media_get_url($!grm);
   }
 
-  method get_url_data (
-    CArray[Str] $mime,
-    gint        $bitrate   is rw,
-    gfloat      $framerate is rw,
-    gint        $width     is rw,
-    gint        $height    is rw
-  ) {
-    grl_media_get_url_data($!grm, $mime, $bitrate, $framerate, $width, $height);
+  method get_url_data {
+    my @a = (newCArray(Str), 0, 0e0, 0, 0);
+
+    samewith( |@a );
   }
 
-  method get_url_data_nth (
-    guint       $index,
+  method get_url_data (
     CArray[Str] $mime,
-    gint        $bitrate   is rw,
-    gfloat      $framerate is rw,
-    gint        $width     is rw,
-    gint        $height    is rw
+                $bitrate   is rw,
+                $framerate is rw,
+                $width     is rw,
+                $height    is rw
   ) {
-    grl_media_get_url_data_nth($!grm, $index, $mime, $bitrate, $framerate, $width, $height);
+    my gint   ($b, $w, $h) = 0;
+    my gfloat  $f          = 0e0;
+
+    grl_media_get_url_data($!grm, $mime, $b, $f, $w, $h);
+    ($bitrate, $framerate, $width, $height) = ($b, $f, $w, $h);
+    (ppr($mime), $bitrate, $framerate, $width, $height)
+  }
+
+  proto method get_url_data_nth (|)
+  { * }
+
+  multi method get_url_data_nth ($index) {
+    my $m = newCArray(Str);
+
+    samewith($index, $m, $, $, $, $);
+  }
+  multi method get_url_data_nth (
+    Int()       $index,
+    CArray[Str] $mime,
+                $bitrate   is rw,
+                $framerate is rw,
+                $width     is rw,
+                $height    is rw
+  ) {
+    my guint   $i          = $index;
+    my gint   ($b, $w, $h) = 0;
+    my gfloat  $f          = 0e0;
+
+    grl_media_get_url_data_nth($!grm, $i, $mime, $b, $f, $w, $h);
+    ($bitrate, $framerate, $width, $height) = ($b, $f, $w, $h);
+    (ppr($mime), $bitrate, $framerate, $width, $height)
+  }
+  method url-datum {
+    self!array-ize( 'url-datum', sub (\k) { self.get_url_data_nth(k) } )
   }
 
   method get_width {
@@ -1070,10 +1147,10 @@ class Grilo::Media {
     grl_media_set_album_artist($!grm, $album_artist);
   }
 
-  method set_album_disc_number (
-    gint     $disc_number
-  ) {
-    grl_media_set_album_disc_number($!grm, $disc_number);
+  method set_album_disc_number (Int() $disc_number) {
+    my gint $d = $disc_number;
+
+    grl_media_set_album_disc_number($!grm, $d);
   }
 
   method set_artist (Str() $artist) {
@@ -1084,10 +1161,10 @@ class Grilo::Media {
     grl_media_set_author($!grm, $author);
   }
 
-  method set_bitrate (
-    gint     $bitrate
-  ) {
-    grl_media_set_bitrate($!grm, $bitrate);
+  method set_bitrate (Int() $bitrate) {
+    my gint $b = $bitrate;
+
+    grl_media_set_bitrate($!grm, $b);
   }
 
   method set_camera_model (Str() $camera_model) {
@@ -1098,10 +1175,10 @@ class Grilo::Media {
     grl_media_set_certificate($!grm, $certificate);
   }
 
-  method set_childcount (
-    gint     $childcount
-  ) {
-    grl_media_set_childcount($!grm, $childcount);
+  method set_childcount (Int() $childcount) {
+    my gint $c = $childcount;
+
+    grl_media_set_childcount($!grm, $c);
   }
 
   method set_composer (Str() $composer) {
@@ -1120,26 +1197,26 @@ class Grilo::Media {
     grl_media_set_director($!grm, $director);
   }
 
-  method set_duration (
-    gint     $duration
-  ) {
-    grl_media_set_duration($!grm, $duration);
+  method set_duration (Int() $duration) {
+    my gint $d = $duration;
+
+    grl_media_set_duration($!grm, $d);
   }
 
-  method set_episode (
-    gint     $episode
-  ) {
-    grl_media_set_episode($!grm, $episode);
+  method set_episode (Int() $episode) {
+    my gint $e = $episode;
+
+    grl_media_set_episode($!grm, $e);
   }
 
   method set_episode_title (Str() $episode_title) {
     grl_media_set_episode_title($!grm, $episode_title);
   }
 
-  method set_exposure_time (
-    gfloat   $exposure_time
-  ) {
-    grl_media_set_exposure_time($!grm, $exposure_time);
+  method set_exposure_time (Int() $exposure_time) {
+    my gfloat $e = $exposure_time;
+
+    grl_media_set_exposure_time($!grm, $e);
   }
 
   method set_external_player (Str() $player) {
@@ -1150,30 +1227,30 @@ class Grilo::Media {
     grl_media_set_external_url($!grm, $url);
   }
 
-  method set_favourite (
-    gboolean $favourite
-  ) {
-    grl_media_set_favourite($!grm, $favourite);
+  method set_favourite (Int() $favourite) {
+    my gboolean $f = $favourite.so.Int;
+
+    grl_media_set_favourite($!grm, $f);
   }
 
   method set_flash_used (Str() $flash_used) {
     grl_media_set_flash_used($!grm, $flash_used);
   }
 
-  method set_framerate (
-    gfloat   $framerate
-  ) {
-    grl_media_set_framerate($!grm, $framerate);
+  method set_framerate (Int() $framerate) {
+    my gfloat $f = $framerate;
+
+    grl_media_set_framerate($!grm, $f);
   }
 
   method set_genre (Str() $genre) {
     grl_media_set_genre($!grm, $genre);
   }
 
-  method set_height (
-    gint     $height
-  ) {
-    grl_media_set_height($!grm, $height);
+  method set_height (Int() $height) {
+    my gint $h = $height;
+
+    grl_media_set_height($!grm, $h);
   }
 
   method set_id (Str() $id) {
@@ -1194,10 +1271,10 @@ class Grilo::Media {
     grl_media_set_last_played($!grm, $last_played);
   }
 
-  method set_last_position (
-    gint     $last_position
-  ) {
-    grl_media_set_last_position($!grm, $last_position);
+  method set_last_position (Int() $last_position) {
+    my gint $l = $last_position;
+
+    grl_media_set_last_position($!grm, $l);
   }
 
   method set_license (Str() $license) {
@@ -1236,14 +1313,20 @@ class Grilo::Media {
     grl_media_set_mime($!grm, $mime);
   }
 
-  method set_modification_date (GDateTime() $modification_date) {
+  proto method set_modification_date (|)
+  { * }
+
+  multi method set_modification_date (DateTime  $modification_date) {
+    samewith( GLib::DateTime.new($modification_date).GDateTime );
+  }
+  multi method set_modification_date (GDateTime $modification_date) {
     grl_media_set_modification_date($!grm, $modification_date);
   }
 
-  method set_orientation (
-    gint     $orientation
-  ) {
-    grl_media_set_orientation($!grm, $orientation);
+  method set_orientation (Int() $orientation) {
+    my gint $o = $orientation;
+
+    grl_media_set_orientation($!grm, $o);
   }
 
   method set_original_title (Str() $original_title) {
@@ -1254,24 +1337,29 @@ class Grilo::Media {
     grl_media_set_performer($!grm, $performer);
   }
 
-  method set_play_count (
-    gint     $play_count
-  ) {
-    grl_media_set_play_count($!grm, $play_count);
+  method set_play_count (Int() $play_count) {
+    my gint $p = $play_count;
+
+    grl_media_set_play_count($!grm, $p);
   }
 
   method set_producer (Str() $producer) {
     grl_media_set_producer($!grm, $producer);
   }
 
-  method set_publication_date (GDateTime() $date) {
+  proto method set_publication_date (|)
+  { * }
+
+  multi method set_publication_date (DateTime $publication_date) {
+    samewith( GLib::DateTime.new($publication_date).GDateTime );
+  }
+  multi method set_publication_date (GDateTime $date) {
     grl_media_set_publication_date($!grm, $date);
   }
 
-  method set_rating (
-    gfloat   $rating,
-    gfloat   $max
-  ) {
+  method set_rating (Num() $rating, Num() $max = 5e0) {
+    my gfloat ($r, $m) = ($rating, $max);
+
     grl_media_set_rating($!grm, $rating, $max);
   }
 
@@ -1287,10 +1375,10 @@ class Grilo::Media {
     grl_media_set_region_data($!grm, $region, $publication_date, $certificate);
   }
 
-  method set_season (
-    gint     $season
-  ) {
-    grl_media_set_season($!grm, $season);
+  method set_season (Int() $season) {
+    my gint $s = $season;
+
+    grl_media_set_season($!grm, $s);
   }
 
   method set_show (Str() $show) {
@@ -1301,10 +1389,10 @@ class Grilo::Media {
     grl_media_set_site($!grm, $site);
   }
 
-  method set_size (
-    gint64   $size
-  ) {
-    grl_media_set_size($!grm, $size);
+  method set_size (Int() $size) {
+    my gint64 $s = $size;
+
+    grl_media_set_size($!grm, $s);
   }
 
   method set_source (Str() $source) {
@@ -1351,14 +1439,17 @@ class Grilo::Media {
   }
 
   method set_url_data (
-    Str      $url,
-    Str      $mime,
-    gint     $bitrate,
-    gfloat   $framerate,
-    gint     $width,
-    gint     $height
+    Str() $url,
+    Str() $mime,
+    Int() $bitrate,
+    Num() $framerate,
+    Int() $width,
+    Int() $height
   ) {
-    grl_media_set_url_data($!grm, $url, $mime, $bitrate, $framerate, $width, $height);
+    my ($b, $w, $h) = ($bitrate, $width, $height);
+    my  $f          =  $framerate;
+
+    grl_media_set_url_data($!grm, $url, $mime, $b, $f, $w, $h);
   }
 
   method set_width (Int() $width) {
