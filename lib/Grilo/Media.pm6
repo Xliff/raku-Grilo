@@ -22,6 +22,8 @@ class Grilo::Media {
 
   has GrlMedia $!grm is implementor;
 
+  has %!arrays;
+
   submethod BUILD ( :$grilo-media ) {
     self.setGrlMedia($grilo-media) if $grilo-media
   }
@@ -43,7 +45,7 @@ class Grilo::Media {
     self!setObject($to-parent);
   }
 
-  method GDL::Raw::Definitions::GrlMedia
+  method Grilo::Raw::Definitions::GrlMedia
     is also<GrlMedia>
   { $!grm }
 
@@ -57,8 +59,11 @@ class Grilo::Media {
     $o.ref if $ref;
     $o;
   }
+  multi method new {
+    my $grilo-media = grl_media_new();
 
-  has %!arrays;
+    $grilo-media ?? self.bless( :$grilo-media ) !! Nil;
+  }
 
   method audio_new
     is also<
@@ -96,12 +101,6 @@ class Grilo::Media {
     $grilo-media ?? self.bless( :$grilo-media ) !! Nil;
   }
 
-  method new {
-    my $grilo-media = grl_media_new();
-
-    $grilo-media ?? self.bless( :$grilo-media ) !! Nil;
-  }
-
   method unserialize (Str() $serialized) {
     my $grilo-media = grl_media_unserialize($serialized);
 
@@ -132,12 +131,12 @@ class Grilo::Media {
         self.prop_get('media-type', $gv);
         my $t = $gv.enum;
         return $t unless $enum;
-        GdlMediaTypeEnum($t);
+        GrlMediaTypeEnum($t);
       },
       STORE => -> $, Int() $val is copy {
-        $gv.valueFromEnum(GdlMediaType) = $val;
+        $gv.valueFromEnum(GrlMediaType) = $val;
         self.prop_set('media-type', $gv);
-
+      }
     );
   }
 
@@ -571,7 +570,7 @@ class Grilo::Media {
   ) {
     samewith(
       $region,
-      GLib::DateTime.new($datetime).GDateTime,
+      GLib::DateTime.new($publication_date).GDateTime,
       $certificate
     );
   }
@@ -596,12 +595,12 @@ class Grilo::Media {
     is also<add-thumbnail-binary>
   { * }
 
-  method add_thumbnail_binary ($thumbnail) {
+  multi method add_thumbnail_binary ($thumbnail) {
     my $b = resolveBuffer($thumbnail);
 
     samewith($b, $b.elems);
   }
-  method add_thumbnail_binary (
+  multi method add_thumbnail_binary (
     CArray[uint8] $thumbnail,
     Int()         $size
   ) {
@@ -660,7 +659,7 @@ class Grilo::Media {
             has $.index is rw = 0;
 
             method pull-one is also<pull_one> {
-              my $v = $s.AT-POS($index++)
+              my $v = $s.AT-POS($!index++);
               return $v if $v.defined;
               IterationEnd;
             }
@@ -669,9 +668,10 @@ class Grilo::Media {
       }
     ).new unless %!arrays{ $name };
     %!arrays{ $name }
+  }
 
   method artists {
-    self!array-ize( 'artists', sub (\k) { $s.get_artist_nth(k) } )
+    self!array-ize( 'artists', sub (\k) { self.get_artist_nth(k) } )
   }
 
   method get_author is also<get-author> {
@@ -717,7 +717,7 @@ class Grilo::Media {
   }
 
   method composers {
-    self!array-ize( 'composers', sub (\k) { $s.get_composer_nth(k) } )
+    self!array-ize( 'composers', sub (\k) { self.get_composer_nth(k) } )
   }
 
   method get_creation_date ( :$raw = False, :$raku = True )
@@ -745,7 +745,7 @@ class Grilo::Media {
   }
 
   method directors {
-    self!array-ize( 'directors', sub (\k) { $s.get_director_nth(k) } )
+    self!array-ize( 'directors', sub (\k) { self.get_director_nth(k) } )
   }
 
   method get_duration is also<get-duration> {
@@ -775,7 +775,7 @@ class Grilo::Media {
   }
 
   method external_urls is also<external-urls> {
-    self!array-ize( 'external-urls', sub (\k) { $s.get_external_url_nth(k) } )
+    self!array-ize( 'external-urls', sub (\k) { self.get_external_url_nth(k) } )
   }
 
   method get_favourite is also<get-favourite> {
@@ -801,7 +801,7 @@ class Grilo::Media {
   }
 
   method genres {
-    self!array-ize( 'genres', sub (\k) { $s.get_genre_nth(k) } )
+    self!array-ize( 'genres', sub (\k) { self.get_genre_nth(k) } )
   }
 
   method get_height is also<get-height> {
@@ -827,7 +827,7 @@ class Grilo::Media {
   }
 
   method keywords {
-    self!array-ize( 'keywords', sub (\k) { $s.get_keyword_nth(k) } )
+    self!array-ize( 'keywords', sub (\k) { self.get_keyword_nth(k) } )
   }
 
   method get_last_played ( :$raw = False, :$raku = True )
@@ -983,7 +983,7 @@ class Grilo::Media {
     return $d if $raw;
     $d = GLib::DateTime.new($d);
     return $d unless $raku;
-    $md.DateTime;
+    $d.DateTime;
   }
 
   method get_rating is also<get-rating> {
@@ -1005,7 +1005,7 @@ class Grilo::Media {
   }
   multi method get_region_data (
     CArray[GDateTime]  $publication_date,
-    CArray[Str]        $certificate
+    CArray[Str]        $certificate,
                       :$raw               = False,
                       :$raku              = True
   ) {
@@ -1121,7 +1121,7 @@ class Grilo::Media {
   method thumbnail_binaries is also<thumbnail-binaries> {
     self!array-ize(
       'thumbnail-binaries',
-      sub (\k) { self.get_thumbnail_binary(k) } )
+      sub (\k) { self.get_thumbnail_binary(k) }
     );
   }
 
@@ -1143,21 +1143,22 @@ class Grilo::Media {
     grl_media_get_url($!grm);
   }
 
-  method get_url_data is also<get-url-data> {
+  proto method get_url_data (|)
+    is also<get-url-data>
+  { * }
+
+  multi method get_url_data {
     my @a = (newCArray(Str), 0, 0e0, 0, 0);
 
     samewith( |@a );
   }
-
-  method get_url_data (
+  multi method get_url_data (
     CArray[Str] $mime,
                 $bitrate   is rw,
                 $framerate is rw,
                 $width     is rw,
                 $height    is rw
-  )
-    is also<get-url-data>
-  {
+  ) {
     my gint   ($b, $w, $h) = 0;
     my gfloat  $f          = 0e0;
 
@@ -1278,15 +1279,15 @@ class Grilo::Media {
     is also<set-creation-date>
   { * }
 
-  method set_creation_date ($creation_date) {
+  multi method set_creation_date ($creation_date) {
     samewith(
       resolve-GDateTime(
         $creation_date,
         origin => &?ROUTINE.name
       );
-    }
+    )
   }
-  method set_creation_date (GDateTime $creation_date) {
+  multi method set_creation_date (GDateTime $creation_date) {
     grl_media_set_creation_date($!grm, $creation_date);
   }
 
@@ -1374,15 +1375,15 @@ class Grilo::Media {
     is also<set-last-played>
   { * }
 
-  method set_last_played ($creation_date) {
+  multi method set_last_played ($creation_date) {
     samewith(
       resolve-GDateTime(
         $creation_date,
         origin => &?ROUTINE.name
       );
-    }
+    )
   }
-  method set_last_played (GDateTime $last_played) {
+  multi method set_last_played (GDateTime $last_played) {
     grl_media_set_last_played($!grm, $last_played);
   }
 
@@ -1439,10 +1440,10 @@ class Grilo::Media {
   multi method set_modification_date ($modification_date) {
     samewith(
       resolve-GDateTime(
-        $creation_date,
+        $modification_date,
         origin => &?ROUTINE.name
       );
-    }
+    )
   }
   multi method set_modification_date (GDateTime $modification_date) {
     grl_media_set_modification_date($!grm, $modification_date);
@@ -1481,10 +1482,10 @@ class Grilo::Media {
   multi method set_publication_date ($publication_date) {
     samewith(
       resolve-GDateTime(
-        $creation_date,
+        $publication_date,
         origin => &?ROUTINE.name
       );
-    }
+    )
   }
   multi method set_publication_date (GDateTime $date) {
     grl_media_set_publication_date($!grm, $date);
