@@ -35,3 +35,18 @@ class Grilo::Enums::SupportedMedia {
   }
 
 }
+
+class Grilo::Enums::MediaType {
+
+  method get_type {
+    state ($n, $t);
+
+    sub grl_media_type_get_type
+      returns GType
+      is native(grl)
+    { * }
+
+    unstable_get_type( self.^name, &grl_media_type_get_type, $n, $t );
+  }
+
+}
