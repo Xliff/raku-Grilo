@@ -3,6 +3,7 @@ use v6.c;
 use NativeCall;
 
 use GLib::Raw::Types;
+use Grilo::Raw::Definitions;
 
 use GLib::Roles::StaticClass;
 
@@ -17,10 +18,14 @@ class Grilo::Main {
     samewith( $, newCArray(Str) )
   }
   multi method init (
-    gint        $argc is rw,
+                $argc is rw,
     CArray[Str] $argv
   ) {
-    grl_init($argc, $argv);
+    my gint $c = 0;
+
+    grl_init($c, $argv);
+    $argc = $c;
+    Nil;
   }
 
   method init_get_option_group {
@@ -30,7 +35,7 @@ class Grilo::Main {
 }
 
 INIT { Grilo::Main.init   }
-EXIT { Grilo::Main.deinit }
+END  { Grilo::Main.deinit }
 
 ### /usr/include/grilo-0.3/grilo.h
 
