@@ -10,12 +10,14 @@ use GLib::GList;
 
 use GLib::Roles::Implementor;
 use GLib::Roles::Object;
+use Grilo::Roles::Signals::Registry;
 
 our subset GrlRegistryAncestry is export of Mu
   where GrlRegistry | GObject;
 
 class Grilo::Registry {
   also does GLib::Roles::Object;
+  also does Grilo::Roles::Signals::Registry;
 
   has GrlRegistry $!gr is implementor;
 
@@ -64,6 +66,18 @@ class Grilo::Registry {
     my $grilo-registry = grl_registry_get_default();
 
     $grilo-registry ?? self.bless( :$grilo-registry ) !! Nil;
+  }
+
+  method metadata-key-added {
+    self.connect-string($!gr, 'metadata-key-added');
+  }
+
+  method source-added ( :$raw = False ) is also<source_added> {
+    self.connect-source($!gr, 'source-added', :$raw);
+  }
+
+  method source-removed ( :$raw = False ) is also<source_removed> {
+    self.connect-source($!gr, 'source-removed', :$raw);
   }
 
   method activate_all_plugins is also<activate-all-plugins> {
