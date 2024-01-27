@@ -82,7 +82,7 @@ class Grilo::Media {
       new-audio
     >
   {
-    self!checkFormMain;
+    self!checkForMain;
 
     my $grilo-media = grl_media_audio_new();
 
@@ -132,7 +132,7 @@ class Grilo::Media {
       new-video
     >
   {
-    self!checkFormMain;
+    self!checkForMain;
 
     my $grilo-media = grl_media_video_new();
 
