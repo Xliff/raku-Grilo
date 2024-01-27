@@ -126,7 +126,9 @@ class Grilo::Caps {
   { * }
 
   multi method set_key_filter (@keys) {
-    samewith( GLib::GList.new(@keys, typed => Int) )
+    samewith(
+      GLib::GList.new(@keys) but GLib::Roles::ListData[Int]
+    )
   }
   multi method set_key_filter (GList() $keys) {
     grl_caps_set_key_filter($!gc, $keys);
@@ -137,7 +139,7 @@ class Grilo::Caps {
   { * }
 
   multi method set_key_range_filter (@keys) {
-    samewith( GLib::GList.new(@keys, typed => Int) )
+    samewith( GLib::GList.new(@keys) but GLib::Roles::ListData[Int] )
   }
   multi method set_key_range_filter (GList() $keys) {
     grl_caps_set_key_range_filter($!gc, $keys);
