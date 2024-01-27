@@ -5,6 +5,7 @@ use Method::Also;
 use NativeCall;
 
 use GLib::Raw::Traits;
+use GLib::Raw::Exceptions;
 use Grilo::Raw::Types;
 use Grilo::Raw::Media;
 
@@ -49,10 +50,19 @@ class Grilo::Media {
     is also<GrlMedia>
   { $!grm }
 
+  method !checkForMain {
+    X::GLib::InvalidState.new(
+      message => "Please 'use Grilo::Main' before invoking objects in {
+                  ''}the Grilo:: namespace!"
+    ).throw unless ::('Grilo::Main') !=== Nil
+  }
+
   multi method new (
      $grilo-media where * ~~ GrlMediaAncestry,
     :$ref                                      = True
   ) {
+    self!checkForMain;
+
     return unless $grilo-media;
 
     my $o = self.bless( :$grilo-media );
@@ -72,6 +82,8 @@ class Grilo::Media {
       new-audio
     >
   {
+    self!checkFormMain;
+
     my $grilo-media = grl_media_audio_new();
 
     $grilo-media ?? self.bless( :$grilo-media ) !! Nil;
@@ -84,6 +96,8 @@ class Grilo::Media {
       new-container
     >
   {
+    self!checkForMain;
+
     my $grilo-media = grl_media_container_new();
 
     $grilo-media ?? self.bless( :$grilo-media ) !! Nil;
@@ -96,12 +110,16 @@ class Grilo::Media {
       new-image
     >
   {
+    self!checkForMain;
+
     my $grilo-media = grl_media_image_new();
 
     $grilo-media ?? self.bless( :$grilo-media ) !! Nil;
   }
 
   method unserialize (Str() $serialized) {
+    self!checkForMain;
+
     my $grilo-media = grl_media_unserialize($serialized);
 
     $grilo-media ?? self.bless( :$grilo-media ) !! Nil;
@@ -114,6 +132,8 @@ class Grilo::Media {
       new-video
     >
   {
+    self!checkFormMain;
+
     my $grilo-media = grl_media_video_new();
 
     $grilo-media ?? self.bless( :$grilo-media ) !! Nil;
