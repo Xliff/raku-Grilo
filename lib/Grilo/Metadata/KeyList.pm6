@@ -4,23 +4,25 @@ use NativeCall;
 
 use Grilo::Raw::Types;
 
-use GLib::Roles::StaticClass;
+use GLib::GList;
 
-class Grilo::Metadata::Key {
-  also does GLib::Roles::StaticClass;
+use GLib::Roles::StaticClass;
+use GLib::Roles::ListData;
+
+class Grilo::Metadata::KeyList {
 
   multi method new ( *@keys ) {
     samewith(@keys);
   }
   multi method new (@keys, :$raw = False) {
-    my $l = GLib::GList.new(@keys, typed => Int);
+    my $l = GLib::GList.new(@keys) but GLib::Roles::ListData[Int];
     return $l unless $raw;
     $l.GList
   }
 
   method get_desc (Int() $key) {
     my GrlKeyID $k = $key;
-    
+
     grl_metadata_key_get_desc($k);
   }
 
