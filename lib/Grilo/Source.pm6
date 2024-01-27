@@ -152,7 +152,10 @@ class Grilo::Source {
   method source-id
     is rw
     is g-property
-    is also<source_id>
+    is also<
+      source_id
+      id
+    >
   {
     my $gv = GLib::Value.new( G_TYPE_STRING );
     Proxy.new(
@@ -168,7 +171,14 @@ class Grilo::Source {
   }
 
   # Type: string
-  method source-name is rw  is g-property is also<source_name> {
+  method source-name
+    is rw
+    is g-property
+    is also<
+      source_name
+      name
+    >
+  {
     my $gv = GLib::Value.new( G_TYPE_STRING );
     Proxy.new(
       FETCH => sub ($) {
@@ -238,7 +248,7 @@ class Grilo::Source {
   ) {
     samewith(
       GrlMedia,
-      GLib::GList.new(@keys),
+      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
       $options,
       &callback,
       $user_data
@@ -253,7 +263,7 @@ class Grilo::Source {
   ) {
     samewith(
       $container,
-      GLib::GList.new(@keys),
+      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
       $options,
       &callback,
       $user_data
@@ -288,7 +298,7 @@ class Grilo::Source {
   ) {
     samewith(
        GrlMedia,
-       GLib::GList.new(@keys, typed => Int),
+       GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
        $options,
        $error,
       :$raw,
@@ -305,7 +315,7 @@ class Grilo::Source {
   ) {
     samewith(
        $container,
-       GLib::GList.new(@keys, typed => Int),
+       GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
        $options,
        $error,
       :$raw,
@@ -371,7 +381,7 @@ class Grilo::Source {
   ) {
     samewith(
       $uri,
-      GLib::GList.new(@keys, typed => Int),
+      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
       $options,
       &callback,
       $user_data
@@ -406,7 +416,7 @@ class Grilo::Source {
   ) {
     samewith(
       $uri,
-      GLib::GList.new(@keys, typed => Int),
+      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
       $options,
       $error
     );
@@ -556,7 +566,7 @@ class Grilo::Source {
   ) {
     samewith(
       $query,
-      GLib::GList.new(@keys, typed => Int),
+      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
       $options,
       &callback,
       $user_data
@@ -586,7 +596,7 @@ class Grilo::Source {
   ) {
     samewith(
       $query,
-      GLib::GList.new(@keys, typed => Int),
+      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
       $options,
       $error,
      :$raw,
@@ -634,7 +644,7 @@ class Grilo::Source {
   ) {
     samewith(
       GrlMedia,
-      GLib::GList.new(@keys, typed => Int),
+      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
       $options,
       &callback,
       $user_data
@@ -649,7 +659,7 @@ class Grilo::Source {
   ) {
     samewith(
       $media,
-      GLib::GList.new(@keys, typed => Int),
+      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
       $options,
       &callback,
       $user_data
@@ -692,7 +702,7 @@ class Grilo::Source {
   ) {
     samewith(
        $media,
-       GLib::GList.new(@keys, typed => Int),
+       GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
        $options,
        $error,
       :$raw
@@ -712,16 +722,40 @@ class Grilo::Source {
   }
 
   multi method search (
+     $text,
+     $_,
+     $options,
+     &callback,
+     $user_data = gpointer,
+    :$raw       = False
+  ) {
+    when GLib::GList | .^can('GList') {
+      samewith($text, .GList, $options, &callback, $user_data, :$raw)
+    }
+
+    when .^can('Array') {
+      samewith($text, .Array, $options, &callback, $user_data, :$raw)
+    }
+
+    default {
+      X::GLib::InvalidType.new(
+        message => "Cannot use a { .^name } as the <key> parameter in call to{
+                    '' } .search"
+      ).throw;
+    }
+  }
+  multi method search (
     Str()                  $text,
-                           @keys,
+    Array                  $keys,
     GrlOperationOptions()  $options,
                            &callback,
     gpointer               $user_data = gpointer,
                           :$raw       = False
   ) {
+    say "K: { $keys.gist }":
     samewith(
       $text,
-      GLib::GList.new(@keys, typed => Int),
+      GLib::GList.new($keys) but GLib::Roles::ListData[Int],
       $options,
       &callback,
       $user_data
@@ -729,7 +763,7 @@ class Grilo::Source {
   }
   multi method search (
     Str()                  $text,
-    GList()                $keys,
+    GList                  $keys,
     GrlOperationOptions()  $options,
                            &callback,
     gpointer               $user_data = gpointer,
