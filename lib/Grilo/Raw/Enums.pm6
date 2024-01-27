@@ -118,6 +118,15 @@ our enum GrlSupportedMediaEnum is export (
   GRL_SUPPORTED_MEDIA_ALL   => (1 +| 1 +< 1 +| 1 +< 2) # (GRL_SUPPORTED_MEDIA_AUDIO | GRL_SUPPORTED_MEDIA_VIDEO | GRL_SUPPORTED_MEDIA_IMAGE)
 );
 
+constant GrlTypeFilter is export := guint32;
+our enum GrlTypeFilterEnum is export (
+  GRL_TYPE_FILTER_NONE  => 0,
+  GRL_TYPE_FILTER_AUDIO => 1,
+  GRL_TYPE_FILTER_VIDEO => 1 +< 1,
+  GRL_TYPE_FILTER_IMAGE => 1 +< 2,
+  GRL_TYPE_FILTER_ALL   => (1 +| 1 +< 1 +| 1 +< 2) # (GRL_TYPE_FILTER_AUDIO | GRL_TYPE_FILTER_VIDEO | GRL_TYPE_FILTER_IMAGE)
+);
+
 constant GrlWriteFlags is export := guint32;
 our enum GrlWriteFlagsEnum is export <
   GRL_WRITE_NORMAL
