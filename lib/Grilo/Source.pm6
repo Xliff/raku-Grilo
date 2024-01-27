@@ -712,17 +712,29 @@ class Grilo::Source {
   }
 
   method search (
-    Str()                 $text,
-                          @keys,
-    GrlOperationOptions() $options,
-                          &callback,
-    gpointer              $user_data = gpointer
+    Str()                  $text,
+                           @keys,
+    GrlOperationOptions()  $options,
+                           &callback,
+    gpointer               $user_data = gpointer,
+                          :$raw       = False
   ) {
+    my &used-callback;
+    unless $raw {
+      my $class = self;
+      &used-callback = sub ($s is copy, $o, $m is copy, $r, $u, $e) {
+        $s = $class.new($s);
+        $m = Grilo::Media.new($m);
+
+        &callback($s, $o, $m, $r, $u, $e);
+      }
+    }
+
     samewith(
       $text,
       GLib::GList.new(@keys, typed => Int),
       $options,
-      &callback,
+      &used-callback // &callback,
       $user_data
     );
   }
