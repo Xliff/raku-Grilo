@@ -1,0 +1,2 @@
+- Add check to determine if Grilo::Main has been loaded and to emit 
+  the proper error message if it hasn't been
