@@ -41,11 +41,11 @@ role Grilo::Roles::Signals::Registry {
 
 # GrlSource, GPtrArray, GrlSourceChangeType, gboolean, gpointer
 sub g-connect-source (
-  Pointer $app,
-  Str     $name,
-          &handler (GrlRegistry, GrlSource, gpointer),
-  Pointer $data,
-  uint32  $flags
+  GrlRegistry $app,
+  Str         $name,
+              &handler (GrlRegistry, GrlSource, gpointer),
+  Pointer     $data,
+  uint32      $flags
 )
   returns uint64
   is      native(gobject)
