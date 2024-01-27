@@ -6,6 +6,8 @@ use GLib::Raw::Traits;
 use Grilo::Raw::Types;
 use Grilo::Raw::Plugin;
 
+use GLib::GList;
+
 use GLib::Roles::Implementor;
 use GLib::Roles::Object;
 
