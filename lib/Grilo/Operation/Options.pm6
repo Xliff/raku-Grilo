@@ -40,7 +40,7 @@ class Grilo::Operation::Options {
     self!setObject($to-parent);
   }
 
-  method Grilo::Raw::Definitions::GrlOperationOptions
+  method Grilo::Raw::Structs::GrlOperationOptions
     is also<GrlOperationOptions>
   { $!goo }
 
@@ -55,9 +55,33 @@ class Grilo::Operation::Options {
     $o;
   }
   multi method new (GrlCaps() $caps) {
-    my $grl-op-options = grl_operation_options_new($caps);
+    my $grilo-op-options = grl_operation_options_new($caps);
 
-    $grl-op-options ?? self.bless( :$grl-op-options ) !! Nil;
+    $grilo-op-options ?? self.bless( :$grilo-op-options ) !! Nil;
+  }
+
+  method count is rw is g-property {
+    Proxy.new:
+      FETCH => -> $     { self.get_count    },
+      STORE => -> $, \v { self.set_count(v) }
+  }
+
+  method resolution_flags is rw is g-property is also<resolution-flags> {
+    Proxy.new:
+      FETCH => -> $     { self.get_resolution_flags    },
+      STORE => -> $, \v { self.set_resolution_flags(v) }
+  }
+
+  method skip is rw is g-property {
+    Proxy.new:
+      FETCH => -> $     { self.get_skip    },
+      STORE => -> $, \v { self.set_skip(v) }
+  }
+
+  method type_filter is rw is g-property is also<type-filter> {
+    Proxy.new:
+      FETCH => -> $     { self.get_type_filter    },
+      STORE => -> $, \v { self.set_type_filter(v) }
   }
 
   method copy ( :$raw = False ) {
