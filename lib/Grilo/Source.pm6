@@ -22,7 +22,7 @@ our subset GrlSourceAncestry is export of Mu
 
 class Grilo::Source {
   also does GLib::Roles::Object;
-  also does Grilo:Roles::Signals::Source;
+  also does Grilo::Roles::Signals::Source;
 
   has GrlSource $!gs is implementor;
 
@@ -47,7 +47,7 @@ class Grilo::Source {
     self!setObject($to-parent);
   }
 
-  method GDL::Raw::Definitions::GrlSource
+  method Grilo::Raw::Structs::GrlSource
     is also<GrlSource>
   { $!gs }
 
@@ -220,7 +220,7 @@ class Grilo::Source {
         GrlSupportedMediaEnum($m);
       },
       STORE => -> $, Int() $val is copy {
-        $gv.valueFromEnum(GdlSupportedMedia) = $val;
+        $gv.valueFromEnum(GrlSupportedMedia) = $val;
         self.prop_set('supported-media', $gv);
       }
     );
@@ -240,7 +240,7 @@ class Grilo::Source {
       GrlMedia,
       GLib::GList.new(@keys),
       $options,
-      $callback,
+      &callback,
       $user_data
     );
   }
@@ -255,7 +255,7 @@ class Grilo::Source {
       $container,
       GLib::GList.new(@keys),
       $options,
-      $callback,
+      &callback,
       $user_data
     );
   }
@@ -271,7 +271,7 @@ class Grilo::Source {
       $container,
       $keys,
       $options,
-      $callback,
+      &callback,
       $user_data
     );
   }
@@ -441,7 +441,7 @@ class Grilo::Source {
   {
     my $m = grl_source_get_supported_media($!gs);
     return $m unless $set;
-    getFlags(GrlSupportedMediaEnum, $f);
+    getFlags(GrlSupportedMediaEnum, $m);
   }
 
   method get_tags ( :$raw = False ) is also<get-tags> {
@@ -453,7 +453,7 @@ class Grilo::Source {
   method get_type is also<get-type> {
     state ($n, $t);
 
-    ubstable_get_type( self.^name, &grl_source_get_type, $n, $t );
+    unstable_get_type( self.^name, &grl_source_get_type, $n, $t );
   }
 
   proto method may_resolve (|)
@@ -485,7 +485,7 @@ class Grilo::Source {
     samewith(
       GrlMedia,
       $change_type,
-      $location_type
+      $location_unknown
     );
   }
   multi method notify_change (
@@ -547,7 +547,7 @@ class Grilo::Source {
     $rv;
   }
 
-  method query (
+  multi method query (
     Str()                 $query,
                           @keys,
     GrlOperationOptions() $options,
@@ -562,7 +562,7 @@ class Grilo::Source {
       $user_data
     );
   }
-  method query (
+  multi method query (
     Str()                 $query,
     GList()               $keys,
     GrlOperationOptions() $options,
@@ -626,7 +626,7 @@ class Grilo::Source {
     set_error($error);
   }
 
-  method resolve
+  multi method resolve (
                           @keys,
     GrlOperationOptions() $options,
                           &callback,
@@ -640,7 +640,7 @@ class Grilo::Source {
       $user_data
     );
   }
-  method resolve (
+  multi method resolve (
     GrlMedia()            $media,
                           @keys,
     GrlOperationOptions() $options,
@@ -655,14 +655,14 @@ class Grilo::Source {
       $user_data
     );
   }
-  method resolve (
+  multi method resolve (
     GrlMedia()            $media,
     GList()               $keys,
     GrlOperationOptions() $options,
                           &callback,
     gpointer              $user_data = gpointer
   ) {
-    grl_source_resolve($!gs, $media, $keys, $options, $callback, $user_data);
+    grl_source_resolve($!gs, $media, $keys, $options, &callback, $user_data);
   }
 
   proto method resolve_sync (|)
@@ -711,7 +711,7 @@ class Grilo::Source {
     propReturnObject($m, $raw, |Grilo::Media.getTypePair);
   }
 
-  method search (
+  multi method search (
     Str()                  $text,
                            @keys,
     GrlOperationOptions()  $options,
@@ -719,10 +719,27 @@ class Grilo::Source {
     gpointer               $user_data = gpointer,
                           :$raw       = False
   ) {
-    my &used-callback;
+    samewith(
+      $text,
+      GLib::GList.new(@keys, typed => Int),
+      $options,
+      &callback,
+      $user_data
+    );
+  }
+  multi method search (
+    Str()                  $text,
+    GList()                $keys,
+    GrlOperationOptions()  $options,
+                           &callback,
+    gpointer               $user_data = gpointer,
+                          :$raw       = False
+
+  ) {
+    my &new-callback;
     unless $raw {
       my $class = self;
-      &used-callback = sub ($s is copy, $o, $m is copy, $r, $u, $e) {
+      &new-callback = sub ($s is copy, $o, $m is copy, $r, $u, $e) {
         $s = $class.new($s);
         $m = Grilo::Media.new($m);
 
@@ -730,22 +747,14 @@ class Grilo::Source {
       }
     }
 
-    samewith(
+    grl_source_search(
+      $!gs,
       $text,
-      GLib::GList.new(@keys, typed => Int),
+      $keys,
       $options,
-      &used-callback // &callback,
+      &new-callback // &callback,
       $user_data
     );
-  }
-  method search (
-    Str()                 $text,
-    GList()               $keys,
-    GrlOperationOptions() $options,
-                          &callback,
-    gpointer              $user_data = gpointer
-  ) {
-    grl_source_search($!gs, $text, $keys, $options, &callback, $user_data);
   }
 
   proto method search_sync (|)
@@ -810,7 +819,7 @@ class Grilo::Source {
       $user_data
     );
   }
-  method store (
+  multi method store (
     GrlMedia() $parent,
     GrlMedia() $media,
     Int()      $flags,
@@ -843,6 +852,10 @@ class Grilo::Source {
     set_error($error);
   }
 
+  proto method store_metadata (|)
+    is also<store-metadata>
+  { * }
+
   multi method store_metadata (
      $media,
      $flags,
@@ -856,7 +869,7 @@ class Grilo::Source {
        GList,
        $flags,
        &callback,
-       $user_data
+       $user_data,
       :$raw,
       :$glist
     );
@@ -870,14 +883,14 @@ class Grilo::Source {
              :$raw            = False,
              :gslist(:$glist) = False
   )
-    is also<store-metadata>
+
   {
     samewith(
        $media,
        GLib::GList.new(@keys, typed => Int),
        $flags,
        &callback,
-       $user_data
+       $user_data,
       :$raw,
       :$glist
     );
@@ -887,12 +900,10 @@ class Grilo::Source {
     GList()     $keys,
     Int()       $flags,
                 &callback,
-    gpointer    $user_data      = gpointer
+    gpointer    $user_data      = gpointer,
                :$raw            = False,
                :gslist(:$glist) = False
-  )
-    is also<store-metadata>
-  {
+  ) {
     my GrlWriteFlags $f = $flags;
 
     grl_source_store_metadata($!gs, $media, $keys, $f, &callback, $user_data);
@@ -902,7 +913,7 @@ class Grilo::Source {
     GrlMedia()              $media,
     GList()                 $keys,
     Int()                   $flags,
-    CArray[Pointer[GError]] $error           = gerror
+    CArray[Pointer[GError]] $error           = gerror,
                             :$raw            = False,
                             :gslist(:$glist) = False
   )
