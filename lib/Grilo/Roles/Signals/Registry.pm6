@@ -40,7 +40,7 @@ role Grilo::Roles::Signals::Registry {
 }
 
 # GrlSource, GPtrArray, GrlSourceChangeType, gboolean, gpointer
-sub g-connect-content-changed (
+sub g-connect-source (
   Pointer $app,
   Str     $name,
           &handler (GrlRegistry, GrlSource, gpointer),
