@@ -5,6 +5,8 @@ use NativeCall;
 use GLib::Raw::Types;
 use Grilo::Raw::Definitions;
 
+use Grilo::Registry;
+
 use GLib::Roles::StaticClass;
 
 class Grilo::Main {
@@ -26,6 +28,16 @@ class Grilo::Main {
     grl_init($c, $argv);
     $argc = $c;
     Nil;
+  }
+
+  method default-init {
+    ( my $r = Grilo::Registry.default ).source-added.tap:
+      sub ( *@a ($, $s, $) ) {
+        Grilo::Registry.addSource($s);
+      };
+
+    $*ERR.say: "Failed to load plugins: { $ERROR.message }"
+      unless $r.load-all-plugins(True);
   }
 
   method init_get_option_group {
