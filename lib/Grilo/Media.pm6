@@ -46,7 +46,7 @@ class Grilo::Media {
     self!setObject($to-parent);
   }
 
-  method Grilo::Raw::Definitions::GrlMedia
+  method Grilo::Raw::Structs::GrlMedia
     is also<GrlMedia>
   { $!grm }
 
