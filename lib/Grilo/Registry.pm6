@@ -15,6 +15,8 @@ use Grilo::Roles::Signals::Registry;
 our subset GrlRegistryAncestry is export of Mu
   where GrlRegistry | GObject;
 
+my %SOURCES;
+
 class Grilo::Registry {
   also does GLib::Roles::Object;
   also does Grilo::Roles::Signals::Registry;
@@ -138,6 +140,22 @@ class Grilo::Registry {
 
   method add_directory (Str() $path) is also<add-directory> {
     so grl_registry_add_directory($!gr, $path);
+  }
+
+  method addSource ($s) is static {
+    unless $s ~~ Grilo::Source {
+      say "Object { $s } is not Grillo::Source compatible, so ignoring...";
+      return;
+    }
+    %SOURCES{$s.id} = $s
+  }
+
+  method getSource ($n) is static {
+    %SOURCES{$n};
+  }
+
+  method getSourceNames is static {
+    %SOURCES.keys;
   }
 
   method get_metadata_keys ( :gslist(:$glist) = False ) is also<get-metadata-keys> {
