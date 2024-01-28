@@ -241,47 +241,93 @@ class Grilo::Source {
   }
 
   multi method browse (
-                          @keys,
-    GrlOperationOptions() $options,
-                          &callback,
-    gpointer              $user_data   = gpointer
+     $_,
+     $options,
+     &callback,
+     $user_data = gpointer,
+    :$raw       = False
+  ) {
+    samewith(GrlMedia, $_, $options, &callback, $user_data, :$raw);
+  }
+  multi method browse (
+     $container,
+     $_,
+     $options,
+     &callback,
+     $user_data = gpointer,
+    :$raw       = False
+  ) {
+    when GLib::GList | .^can('GList') {
+      samewith($container, .GList, $options, &callback, $user_data, :$raw)
+    }
+
+    when .^can('Array') {
+      samewith($container, .Array, $options, &callback, $user_data, :$raw)
+    }
+
+    default {
+      X::GLib::InvalidType.new(
+        message => "Cannot use a { .^name } as the <key> parameter in call to{
+                    '' } .browse"
+      ).throw;
+    }
+  }
+  multi method browse (
+    Array     $keys,
+              $options,
+              &callback,
+    gpointer  $user_data  = gpointer,
+             :$raw        = False
   ) {
     samewith(
       GrlMedia,
-      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
+      GLib::GList.new($keys) but GLib::Roles::ListData[Int],
       $options,
       &callback,
       $user_data
     );
   }
   multi method browse (
-    GrlMedia()            $container,
-                          @keys,
-    GrlOperationOptions() $options,
-                          &callback,
-    gpointer              $user_data   = gpointer
+    GrlMedia()  $container,
+    Array       $keys,
+                $options,
+                &callback,
+    gpointer    $user_data   = gpointer,
+               :$raw         = False
   ) {
     samewith(
       $container,
-      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
+      GLib::GList.new($keys) but GLib::Roles::ListData[Int],
       $options,
       &callback,
       $user_data
     );
   }
   multi method browse (
-    GrlMedia()            $container,
-    GList()               $keys,
-    GrlOperationOptions() $options,
-                          &callback,
-    gpointer              $user_data   = gpointer
+    GrlMedia()             $container,
+    GList                  $keys,
+    GrlOperationOptions()  $options,
+                           &callback,
+    gpointer               $user_data   = gpointer,
+                          :$raw         = False
   ) {
+    my &new-callback;
+    unless $raw {
+      my $class = self;
+      &new-callback = sub ($s is copy, $o, $m is copy, $r, $u, $e) {
+        $s = $class.new($s);
+        $m = Grilo::Media.new($m);
+
+        &callback($s, $o, $m, $r, $u, $e);
+      }
+    }
+
     grl_source_browse(
       $!gs,
       $container,
       $keys,
       $options,
-      &callback,
+      &new-callback // &callback,
       $user_data
     );
   }
@@ -373,23 +419,58 @@ class Grilo::Source {
   { * }
 
   multi method get_media_from_uri (
-    Str()                 $uri,
-                          @keys,
-    GrlOperationOptions() $options,
-                          &callback,
-    gpointer              $user_data = gpointer
+     $uri,
+     $_,
+     $options,
+     &callback,
+     $user_data = gpointer,
+    :$raw       = False
   ) {
+    when GLib::GList | .^can('GList') {
+      samewith( $uri, .GList, $options, &callback, $user_data, :$raw )
+    }
+
+    when .^can('Array') {
+      samewith( $uri, .Array, $options, &callback, $user_data, :$raw )
+    }
+
+    default {
+      X::GLib::InvalidType.new(
+        message => "Cannot use a { .^name } as the <key> parameter in call to{
+                    '' } .browse"
+      ).throw;
+    }
+  }
+  multi method get_media_from_uri (
+              $uri,
+    Array     $keys,
+              $options,
+              &callback,
+    gpointer  $user_data = gpointer,
+             :$raw       = false
+  ) {
+    my &new-callback;
+    unless $raw {
+      my $class = self;
+      &new-callback = sub ($s is copy, $o, $m is copy, $r, $u, $e) {
+        $s = $class.new($s);
+        $m = Grilo::Media.new($m);
+
+        &callback($s, $o, $m, $r, $u, $e);
+      }
+    }
+
     samewith(
       $uri,
-      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
+      GLib::GList.new($keys) but GLib::Roles::ListData[Int],
       $options,
-      &callback,
+      &new-callback // &callback,
       $user_data
     );
   }
   multi method get_media_from_uri (
     Str()                 $uri,
-    GList()               $keys,
+    GList                 $keys,
     GrlOperationOptions() $options,
                           &callback,
     gpointer              $user_data = gpointer
