@@ -447,7 +447,7 @@ class Grilo::Source {
               $options,
               &callback,
     gpointer  $user_data = gpointer,
-             :$raw       = false
+             :$raw       = False
   ) {
     my &new-callback;
     unless $raw {
