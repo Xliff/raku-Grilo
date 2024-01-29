@@ -15,7 +15,7 @@ class Grilo::Metadata::KeyList {
     samewith(@keys);
   }
   multi method new (@keys, :$raw = False) {
-    my $l = GLib::GList.new(@keys) but GLib::Roles::ListData[Int];
+    my $l = GLib::GList.new(@keys) but GLib::Roles::ListData[GrlKeyId];
     return $l unless $raw;
     $l.GList
   }

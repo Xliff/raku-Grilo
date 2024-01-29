@@ -281,7 +281,7 @@ class Grilo::Source {
   ) {
     samewith(
       GrlMedia,
-      GLib::GList.new($keys) but GLib::Roles::ListData[Int],
+      GLib::GList.new($keys) but GLib::Roles::ListData[GrlKeyID],
       $options,
       &callback,
       $user_data
@@ -297,7 +297,7 @@ class Grilo::Source {
   ) {
     samewith(
       $container,
-      GLib::GList.new($keys) but GLib::Roles::ListData[Int],
+      GLib::GList.new($keys) but GLib::Roles::ListData[GrlKeyId],
       $options,
       &callback,
       $user_data
@@ -344,7 +344,7 @@ class Grilo::Source {
   ) {
     samewith(
        GrlMedia,
-       GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
+       GLib::GList.new(@keys) but GLib::Roles::ListData[GrlKeyId],
        $options,
        $error,
       :$raw,
@@ -361,7 +361,7 @@ class Grilo::Source {
   ) {
     samewith(
        $container,
-       GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
+       GLib::GList.new(@keys) but GLib::Roles::ListData[GrlKeyId],
        $options,
        $error,
       :$raw,
@@ -462,7 +462,7 @@ class Grilo::Source {
 
     samewith(
       $uri,
-      GLib::GList.new($keys) but GLib::Roles::ListData[Int],
+      GLib::GList.new($keys) but GLib::Roles::ListData[GrlKeyId],
       $options,
       &new-callback // &callback,
       $user_data
@@ -497,7 +497,7 @@ class Grilo::Source {
   ) {
     samewith(
       $uri,
-      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
+      GLib::GList.new(@keys) but GLib::Roles::ListData[GrlKeyId],
       $options,
       $error
     );
@@ -647,7 +647,7 @@ class Grilo::Source {
   ) {
     samewith(
       $query,
-      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
+      GLib::GList.new(@keys) but GLib::Roles::ListData[GrlKeyId],
       $options,
       &callback,
       $user_data
@@ -677,7 +677,7 @@ class Grilo::Source {
   ) {
     samewith(
       $query,
-      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
+      GLib::GList.new(@keys) but GLib::Roles::ListData[GrlKeyId],
       $options,
       $error,
      :$raw,
@@ -725,7 +725,7 @@ class Grilo::Source {
   ) {
     samewith(
       GrlMedia,
-      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
+      GLib::GList.new(@keys) but GLib::Roles::ListData[GrlKeyId],
       $options,
       &callback,
       $user_data
@@ -740,7 +740,7 @@ class Grilo::Source {
   ) {
     samewith(
       $media,
-      GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
+      GLib::GList.new(@keys) but GLib::Roles::ListData[GrlKeyId],
       $options,
       &callback,
       $user_data
@@ -783,7 +783,7 @@ class Grilo::Source {
   ) {
     samewith(
        $media,
-       GLib::GList.new(@keys) but GLib::Roles::ListData[Int],
+       GLib::GList.new(@keys) but GLib::Roles::ListData[GrlKeyId],
        $options,
        $error,
       :$raw
@@ -836,7 +836,7 @@ class Grilo::Source {
     say "K: { $keys.gist }":
     samewith(
       $text,
-      GLib::GList.new($keys) but GLib::Roles::ListData[Int],
+      GLib::GList.new($keys) but GLib::Roles::ListData[GrlKeyId],
       $options,
       &callback,
       $user_data
