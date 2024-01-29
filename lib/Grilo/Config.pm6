@@ -59,31 +59,31 @@ class Grilo::Config {
     $grilo-config ?? self.bless( :$grilo-config ) !! Nil;
   }
 
-  method api_key is rw is g-property {
+  method api_key is rw is g-property is also<api-key> {
     Proxy.new:
       FETCH => -> $     { self.get_api_key    },
       STORE => -> $, \v { self.set_api_key(v) }
   }
 
-  method api_key_blob is rw is g-property {
+  method api_key_blob is rw is g-property is also<api-key-blob> {
     Proxy.new:
       FETCH => -> $     { self.get_api_key_blob    },
       STORE => -> $, \v { self.set_api_key_blob(v) }
   }
 
-  method api_secret is rw is g-property {
+  method api_secret is rw is g-property is also<api-secret> {
     Proxy.new:
       FETCH => -> $     { self.get_api_secret    },
       STORE => -> $, \v { self.set_api_secret(v) }
   }
 
-  method api_token is rw is g-property {
+  method api_token is rw is g-property is also<api-token> {
     Proxy.new:
       FETCH => -> $     { self.get_api_token    },
       STORE => -> $, \v { self.set_api_token(v) }
   }
 
-  method api_token_secret is rw is g-property {
+  method api_token_secret is rw is g-property is also<api-token-secret> {
     Proxy.new:
       FETCH => -> $     { self.get_api_token_secret    },
       STORE => -> $, \v { self.set_api_token_secret(v) }
