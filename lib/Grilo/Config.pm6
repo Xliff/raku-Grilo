@@ -53,10 +53,10 @@ class Grilo::Config {
     $o.ref if $ref;
     $o;
   }
-  multi method new (Str() $plugin, Str() $source) {
-    my $grl-config = grl_config_new($plugin, $source);
+  multi method new (Str() $plugin, Str() $source = Str) {
+    my $grilo-config = grl_config_new($plugin, $source);
 
-    $grl-config ?? self.bless( :$grl-config ) !! Nil;
+    $grilo-config ?? self.bless( :$grilo-config ) !! Nil;
   }
 
   method api_key is rw is g-property {
